@@ -18,20 +18,49 @@ void handleRoot() {
 }
 
 void handleCommand() { // If a POST request is made to URI /command
-  if(!server.hasArg("command") || server.arg("command") == NULL) { 
+  if(!server.hasArg("magnitude") || server.arg("magnitude") == NULL || !server.hasArg("direction") || server.arg("direction") == NULL) { 
     server.send(400, "text/plain", "400: Invalid Request");   // The request is invalid, so send HTTP status 400
     return;
   }
   server.send(200, "text/plain", "got it");
   Serial.println(server.arg("plain"));
-  // Get value from request
-  String temp = "";
-  temp = server.arg("value"); 
-  int value = temp.toInt();
-  if(value > 1 || value < 0) 
-    value = 0;
 
-  digitalWrite(D2, value);
+  String temp = "";
+  // Get magnitude integer value
+  temp = server.arg("magnitude"); 
+  int mag = temp.toInt();
+  // Normalize, exclude outliers
+  if(mag > 1 || mag < 0) 
+    mag = 0;
+
+  // get direction integer value 0 = left, 1 = forward, 2 = right, 3 = reverse
+  temp = server.arg("direction");
+  int dir = temp.toInt();
+  // set outliers to forward for testing
+  if(dir > 3 || dir < 0)
+    dir = 0;
+  // set outpin based on dir
+  int outpin = 0;
+  switch(dir) {
+    case(0):
+      outpin = D1;
+      break;
+    case(1):
+      outpin = D3;
+      break;
+    case(2):
+      outpin = D2;
+      break;
+    case(3):
+      outpin = D4;
+      break;
+    default:
+      outpin = D3;
+      break;
+  }
+
+
+  digitalWrite(outpin, mag);
 
   return;
 }
@@ -45,10 +74,17 @@ void handleNotFound(){
 //                  SETUP
 //===============================================================
 void setup(void){
+  pinMode(D1, OUTPUT);
   pinMode(D2, OUTPUT);
+  pinMode(D3, OUTPUT);
+  pinMode(D4, OUTPUT);
+
+  digitalWrite(D1, LOW);
   digitalWrite(D2, LOW);
+  digitalWrite(D3, LOW);
+  digitalWrite(D4, LOW);
+
   Serial.begin(9600);
-  Serial.println("");
   WiFi.mode(WIFI_AP);           //Only Access point
   //WiFi.softAP(ssid, password);  //Start HOTspot removing password will disable security
   WiFi.softAP(ssid);
