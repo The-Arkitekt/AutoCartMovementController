@@ -7,7 +7,7 @@
 
 //SSID and Password to your ESP Access Point
 const char* ssid = "AutoCartMovementControl";
-//const char* password = "12345678";
+const char* password = "password";
 
 ESP8266WebServer server(80); //Server on port 80
 
@@ -98,8 +98,7 @@ void setup(void){
 
   Serial.begin(9600);
   WiFi.mode(WIFI_AP);           //Only Access point
-  //WiFi.softAP(ssid, password);  //Start HOTspot removing password will disable security
-  WiFi.softAP(ssid);
+  WiFi.softAP(ssid, password);  //Start HOTspot removing password will disable security
 
   IPAddress myIP = WiFi.softAPIP(); //Get IP address
   Serial.print("HotSpt IP:");
