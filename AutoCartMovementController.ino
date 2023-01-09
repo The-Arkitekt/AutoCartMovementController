@@ -6,15 +6,16 @@
 #include "DistributedRobotArchitecture.h"
 
 //SSID and Password to your ESP Access Point
-const char* ssid = "AutoCartMovementControl";
+const char* ssid = "AutoCartMovementController";
 const char* password = "password";
 
 ESP8266WebServer server(80); //Server on port 80
 
-//Build robot chassis model
-Chassis robotChassis;
-int driveMotorActuatorId = robotChassis.addActuator(new TestMotor(D2, D4));
-int steeringActuatorId   = robotChassis.addActuator(new TestSteering(D3, D1));
+//Create Ackerman Drive with Basic Hardware Interface for Testing;
+
+MovementController::DriveInterface* drive = new MovementController::ArduinoDrive(D2, D4);
+MovementController::SteeringInterface* steering = new MovementController::ArduinoSteering(D3, D1);
+MovementController::AckermanDrive robotChassis(drive, steering);
 
 //==============================================================
 //     This rutine is exicuted when you open its IP in browser
@@ -45,33 +46,28 @@ void handleCommand() { // If a POST request is made to URI /command
   // set outliers to forward for testing
   if(dir > 3 || dir < 0)
     dir = 0;
-  
-  Actuator* steering = robotChassis.getActuator(steeringActuatorId);
-  Actuator* driveMotor = robotChassis.getActuator(driveMotorActuatorId);
 
-  switch(dir) {
-    case(0):
-      steering->setValue(-1*mag);
-      steering->applyValue();
-      break;
-    case(1):
-      driveMotor->setValue(1*mag);
-      driveMotor->applyValue();
-      break;
-    case(2):
-      steering->setValue(1*mag);
-      steering->applyValue();
-      break;
-    case(3):
-      driveMotor->setValue(-1*mag);
-      driveMotor->applyValue();
-      break;
-    default:
-      driveMotor->setValue(0);
-      steering->setValue(0);
-      driveMotor->applyValue();
-      steering->applyValue();
-      break;
+  if(mag == 0 && (dir == 1 || dir == 3))
+    robotChassis.coast();
+
+  else {
+    switch(dir) {
+      case(0):
+        robotChassis.steer(-1 * mag);
+        break;
+      case(1):
+        robotChassis.drive(mag);
+        break;
+      case(2):
+        robotChassis.steer(mag);
+        break;
+      case(3):
+        robotChassis.drive(-1 * mag);
+        break;
+      default:
+        robotChassis.coast();
+        break;
+    }
   }
   return;
 }
